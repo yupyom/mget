@@ -44,18 +44,27 @@ namespace WFA01
             Debug.WriteLine(parent_path);
             output_file = new FileInfo(parent_path + output_file_name);
 
-            // ファイルのアクセス権限を見る
-            FileAttributes fas = File.GetAttributes(output_file.ToString());
-            bool bReadOnly = ((fas & FileAttributes.ReadOnly) == FileAttributes.ReadOnly);
-            if (bReadOnly)
-            {
-                var desktop_path = System.Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-                output_file = new FileInfo(desktop_path + output_file_name);
-            }
             if (output_file.Exists)
             {
                 output_file.Delete();
                 output_file = new FileInfo(parent_path + output_file_name);
+            }
+
+            //check if has write permissions
+            try
+            {
+                using (FileStream fs = File.Create(parent_path + output_file_name))
+                {
+                    fs.Close();
+                }
+                output_file.Delete();
+                output_file = new FileInfo(parent_path + output_file_name);
+            }
+            catch
+            {
+                var desktop_path = System.Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+                output_file = new FileInfo(desktop_path + output_file_name);
+
             }
 
             Debug.WriteLine(output_file.FullName);
@@ -76,7 +85,6 @@ namespace WFA01
 
                         DoProcess(progress, logger, i_sheet, o_sheet);
                         package2.Save();
-
                     }
                 }
                 else
